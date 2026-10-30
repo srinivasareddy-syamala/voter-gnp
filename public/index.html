@@ -40,14 +40,18 @@
     </div>
     <div id="telugu" class="telugu" hidden></div>
     <div id="voiceStatus" class="voice" hidden></div>
-    <details class="filters">
-      <summary>ఫిల్టర్లు · Filters</summary>
+    <details class="filters" id="fbox">
+      <summary>ఫిల్టర్లు · Filters <span id="fcount" class="fcount" hidden></span></summary>
       <div class="frow">
         <label>వార్డు<select id="ward"><option value="">అన్నీ</option></select></label>
         <label>లింగము<select id="gender"><option value="">అన్నీ</option><option value="M">పురుషుడు</option><option value="F">స్త్రీ</option></select></label>
         <label>వయస్సు<span class="age"><input id="amin" type="number" min="18" max="120" placeholder="18">–<input id="amax" type="number" min="18" max="120" placeholder="120"></span></label>
       </div>
-      <p class="hint">ఓటరు ఐడి (SDS1805753), ఇంటి సంఖ్య (1-2/A) లేదా క్రమ సంఖ్యతో కూడా వెతకవచ్చు.</p>
+      <div class="factions">
+        <button id="fapply" class="btn pri">🔍 చూపించు · Show</button>
+        <button id="fclear" class="btn">✕ క్లియర్ · Clear</button>
+      </div>
+      <p class="hint">పేరు లేకుండా కూడా ఫిల్టర్ వాడవచ్చు – ఉదా: వార్డు 5 లోని అందరు స్త్రీలు.<br>ఓటరు ఐడి (SDS1805753), ఇంటి సంఖ్య (1-2/A) లేదా క్రమ సంఖ్యతో కూడా వెతకవచ్చు.</p>
     </details>
   </section>
 

@@ -44,11 +44,19 @@
     return v => (!ward || v.ward === ward) && (!g || v.g === g) && (v.age == null || (v.age >= amin && v.age <= amax));
   }
 
+  function filtersActive() {
+    return !!($('ward').value || $('gender').value || $('amin').value || $('amax').value);
+  }
+  function updateFilterBadge() {
+    const n = ['ward', 'gender'].filter(id => $(id).value).length + (($('amin').value || $('amax').value) ? 1 : 0);
+    $('fcount').textContent = n; $('fcount').hidden = !n;
+  }
+
   function search(q) {
     const ok = filters();
     q = q.trim();
     if (family) return DB.filter(v => v._h === family && ok(v)).sort((a, b) => a.sl - b.sl).map(v => ({ v, s: 1 }));
-    if (!q) return null;
+    if (!q) return filtersActive() ? DB.filter(ok).sort((a, b) => a.sl - b.sl).map(v => ({ v, s: 1 })) : null;
 
     // voter ID / house number / serial number
     if (/\d/.test(q) && !TE.test(q)) {
@@ -164,7 +172,9 @@
       $('more').hidden = true; return;
     }
     const banner = family ? `<div class="banner"><span>🏠 ఇంటి సంఖ్య <b>${esc(family_label)}</b> – ${results.length} మంది</span><button id="clearFam" aria-label="Clear">✕</button></div>` : '';
-    $('meta').innerHTML = family ? '' : `${results.length} ఫలితాలు · results`;
+    const fdesc = [$('ward').value && `వార్డు ${$('ward').value}`, $('gender').value && ($('gender').value === 'F' ? 'స్త్రీలు' : 'పురుషులు'),
+      ($('amin').value || $('amax').value) && `వయస్సు ${$('amin').value || 18}–${$('amax').value || '120'}`].filter(Boolean).join(' · ');
+    $('meta').innerHTML = family ? '' : `${results.length} ఫలితాలు · results${fdesc ? ` <span style="color:var(--brand)">(${esc(fdesc)})</span>` : ''}`;
     if (!results.length) { el.innerHTML = banner + `<div class="empty">ఎవరూ దొరకలేదు. స్పెల్లింగ్ మార్చి / ఇంటిపేరు లేకుండా ప్రయత్నించండి.<br><small>No match – try a shorter or different spelling.</small></div>`; $('more').hidden = true; return; }
     const end = Math.min(results.length, shown + PAGE_SIZE);
     const html = results.slice(shown, end).map((r, k) => card(r, shown + k, qt)).join('');
@@ -183,7 +193,16 @@
   }
   $('q').addEventListener('input', () => { family = null; clearTimeout(timer); timer = setTimeout(run, 160); });
   $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); run(); $('q').blur(); } });
-  ['ward', 'gender', 'amin', 'amax'].forEach(id => $(id).addEventListener('input', run));
+  ['ward', 'gender', 'amin', 'amax'].forEach(id => $(id).addEventListener('change', () => { updateFilterBadge(); run(); }));
+  $('fapply').addEventListener('click', () => {
+    updateFilterBadge(); run();
+    $('fbox').open = false;
+    $('meta').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('fclear').addEventListener('click', () => {
+    ['ward', 'gender', 'amin', 'amax'].forEach(id => { $(id).value = ''; });
+    updateFilterBadge(); run();
+  });
   $('more').addEventListener('click', () => render(true));
 
   function seg(id, key) {
