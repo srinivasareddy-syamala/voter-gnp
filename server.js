@@ -61,6 +61,12 @@ app.use((req, res, next) => {
 });
 
 app.use('/data', express.static(path.join(__dirname, 'data'), { maxAge: '7d', index: false }));
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+// app files: always revalidate so a new deploy shows up immediately (fonts can be cached long)
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, file) => {
+    if (/\.(woff2)$/.test(file)) res.setHeader('Cache-Control', 'public, max-age=2592000');
+    else res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
 
 app.listen(PORT, () => console.log(`Voter search running on port ${PORT}`));
