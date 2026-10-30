@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f6b5c">
+<title>ఓటరు శోధన · గణపవరం 2026</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="t1">ఓటరు శోధన <span>Voter Search</span></div>
+    <div class="t2">గణపవరం గ్రామ పంచాయతీ · మైలవరం · 2026</div>
+  </div>
+  <a class="logout" href="/logout" title="Logout">నిష్క్రమించు</a>
+</header>
+
+<main>
+  <section class="searchbox">
+    <div class="inputrow">
+      <input id="q" type="search" autocomplete="off" spellcheck="false"
+             placeholder="పేరు టైప్ చేయండి / Type name in English or తెలుగు">
+      <button id="mic" class="mic" title="Voice search / మాట్లాడండి" aria-label="Voice search">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+      </button>
+    </div>
+    <div class="row small">
+      <div class="seg" id="voiceLang" role="group" aria-label="Voice language">
+        <span class="lbl">🎤</span>
+        <button data-v="te-IN" class="on">తెలుగు</button>
+        <button data-v="en-IN">English</button>
+      </div>
+      <div class="seg" id="field" role="group" aria-label="Search in">
+        <button data-v="name" class="on">ఓటరు పేరు</button>
+        <button data-v="rel">తండ్రి/భర్త పేరు</button>
+        <button data-v="both">రెండూ</button>
+      </div>
+    </div>
+    <div id="telugu" class="telugu" hidden></div>
+    <div id="voiceStatus" class="voice" hidden></div>
+    <details class="filters">
+      <summary>ఫిల్టర్లు · Filters</summary>
+      <div class="frow">
+        <label>వార్డు<select id="ward"><option value="">అన్నీ</option></select></label>
+        <label>లింగము<select id="gender"><option value="">అన్నీ</option><option value="M">పురుషుడు</option><option value="F">స్త్రీ</option></select></label>
+        <label>వయస్సు<span class="age"><input id="amin" type="number" min="18" max="120" placeholder="18">–<input id="amax" type="number" min="18" max="120" placeholder="120"></span></label>
+      </div>
+      <p class="hint">ఓటరు ఐడి (SDS1805753), ఇంటి సంఖ్య (1-2/A) లేదా క్రమ సంఖ్యతో కూడా వెతకవచ్చు.</p>
+    </details>
+  </section>
+
+  <div id="meta" class="meta"></div>
+  <section id="results" class="results"></section>
+  <button id="more" class="more" hidden>మరిన్ని చూపించు · Show more</button>
+</main>
+
+<div id="viewer" class="viewer" hidden>
+  <div class="vbar">
+    <button id="vclose" class="vbtn" aria-label="Close">✕</button>
+    <div class="vtitle"><b id="vname"></b><span id="vsub"></span></div>
+    <button id="vprev" class="vbtn" aria-label="Previous">‹</button>
+    <button id="vnext" class="vbtn" aria-label="Next">›</button>
+  </div>
+  <div class="vbody" id="vbody">
+    <div class="crop" id="crop"></div>
+    <div class="vtools">
+      <span id="vpage"></span>
+      <span><button id="zout" class="vbtn s">−</button><button id="zin" class="vbtn s">+</button></span>
+    </div>
+    <div class="pagewrap" id="pagewrap">
+      <div class="page" id="page"><img id="pimg" alt=""><div class="hl" id="hl"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="phonetic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
