@@ -190,8 +190,6 @@
     results = search($('q').value);
     render(false);
     showTelugu($('q').value);
-    if (isWide()) { if (results && results.length) openViewer(0); else closeViewer(); }
-    else if (vi >= 0) closeViewer();
   }
   $('q').addEventListener('input', () => { family = null; clearTimeout(timer); timer = setTimeout(run, 160); });
   $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); run(); $('q').blur(); } });
@@ -219,39 +217,14 @@
   $('results').addEventListener('click', e => {
     const o = e.target.closest('[data-open]'); if (o) return openViewer(+o.dataset.open);
     const h = e.target.closest('[data-house]');
-    if (!h && isWide() && !e.target.closest('#clearFam')) {
-      const c = e.target.closest('.card'); const b = c && c.querySelector('[data-open]');
-      if (b) return openViewer(+b.dataset.open);
-    }
     if (h) { family = h.dataset.house; family_label = h.dataset.hl; run(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     if (e.target.closest('#clearFam')) { family = null; run(); }
   });
 
   // ---------- document viewer with highlight ----------
-  // phones: full-screen viewer; laptops/desktops (>=1000px): fixed side panel on the right
-  const wideMQ = window.matchMedia('(min-width:1000px)');
-  const isWide = () => wideMQ.matches;
   let vi = -1, zoom = 1;
-  function setEmpty(on) { $('viewer').classList.toggle('empty', on); }
-  function scrollToHl(smooth) {
-    const vb = $('vbody'), pw = $('pagewrap'), hl = $('hl');
-    const hr = hl.getBoundingClientRect(), vr = vb.getBoundingClientRect(), pr = pw.getBoundingClientRect();
-    vb.scrollTo({ top: vb.scrollTop + hr.top - vr.top - vb.clientHeight / 2 + hr.height / 2, behavior: smooth ? 'smooth' : 'auto' });
-    pw.scrollLeft += hr.left - pr.left - pw.clientWidth / 2 + hr.width / 2;
-  }
-  function markActive(scrollList) {
-    document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
-    const b = document.querySelector(`[data-open="${vi}"]`);
-    if (b) { const c = b.closest('.card'); c.classList.add('active'); if (scrollList && isWide()) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-  }
-  function syncLayout() {
-    if (isWide()) { $('viewer').hidden = false; document.body.style.overflow = ''; if (vi < 0) setEmpty(true); }
-    else { setEmpty(false); if (vi < 0) $('viewer').hidden = true; }
-  }
-  wideMQ.addEventListener ? wideMQ.addEventListener('change', syncLayout) : wideMQ.addListener(syncLayout);
-  function openViewer(i, scrollList) {
-    if (!results || !results[i]) return;
-    vi = i; setEmpty(false); const v = results[i].v; const pg = PAGES[v.page - 1] || { w: 595, h: 842 };
+  function openViewer(i) {
+    vi = i; const v = results[i].v; const pg = PAGES[v.page - 1] || { w: 595, h: 842 };
     const [bx, by, bw, bh] = v.box, src = `/data/pages/${v.page}.webp`;
     $('vname').textContent = v.name || '(పేరు లేదు)';
     $('vsub').textContent = `క్ర.సం. ${v.sl} · ${v.epic} · వార్డు ${v.ward}`;
@@ -268,33 +241,23 @@
     Object.assign(hl.style, { left: bx * 100 + '%', top: by * 100 + '%', width: bw * 100 + '%', height: bh * 100 + '%' });
     hl.style.animation = 'none'; void hl.offsetWidth; hl.style.animation = '';
     const img = $('pimg');
-    img.onload = () => setTimeout(() => scrollToHl(true), 60);
+    img.onload = () => setTimeout(() => hl.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' }), 60);
     if (img.getAttribute('src') !== src) img.src = src; else img.onload();
     $('vprev').disabled = i <= 0; $('vnext').disabled = i >= results.length - 1;
-    $('viewer').hidden = false;
+    $('viewer').hidden = false; document.body.style.overflow = 'hidden';
     $('vbody').scrollTop = 0;
-    markActive(scrollList);
-    if (!isWide()) {
-      document.body.style.overflow = 'hidden';
-      if (!history.state || !history.state.viewer) history.pushState({ viewer: 1 }, '');
-    }
+    if (!history.state || !history.state.viewer) history.pushState({ viewer: 1 }, '');
   }
-  function closeViewer() {
-    vi = -1; document.body.style.overflow = '';
-    document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
-    if (isWide()) setEmpty(true); else $('viewer').hidden = true;
-  }
-  $('vclose').addEventListener('click', () => { if (!isWide() && history.state && history.state.viewer) history.back(); else closeViewer(); });
-  window.addEventListener('popstate', () => { if (!isWide() && !$('viewer').hidden) closeViewer(); });
-  $('vprev').addEventListener('click', () => vi > 0 && openViewer(vi - 1, true));
-  $('vnext').addEventListener('click', () => {
-    if (vi < results.length - 1) { if (vi + 1 >= shown) render(true); openViewer(vi + 1, true); }
-  });
-  function setZoom(z) { zoom = Math.max(1, Math.min(3, z)); $('page').style.width = `min(${900 * zoom}px, ${96 * zoom}vw)`; setTimeout(() => scrollToHl(false), 200); }
+  function closeViewer() { $('viewer').hidden = true; document.body.style.overflow = ''; vi = -1; }
+  $('vclose').addEventListener('click', () => { if (history.state && history.state.viewer) history.back(); else closeViewer(); });
+  window.addEventListener('popstate', () => { if (!$('viewer').hidden) closeViewer(); });
+  $('vprev').addEventListener('click', () => vi > 0 && openViewer(vi - 1));
+  $('vnext').addEventListener('click', () => vi < results.length - 1 && openViewer(vi + 1));
+  function setZoom(z) { zoom = Math.max(1, Math.min(3, z)); $('page').style.width = `min(${900 * zoom}px, ${96 * zoom}vw)`; setTimeout(() => $('hl').scrollIntoView({ block: 'center', inline: 'center' }), 200); }
   $('zin').addEventListener('click', () => setZoom(zoom + 0.5));
   $('zout').addEventListener('click', () => setZoom(zoom - 0.5));
   document.addEventListener('keydown', e => {
-    if (vi < 0 || e.target === $('q')) return;
+    if ($('viewer').hidden) return;
     if (e.key === 'Escape') $('vclose').click();
     if (e.key === 'ArrowRight') $('vnext').click();
     if (e.key === 'ArrowLeft') $('vprev').click();
@@ -319,38 +282,5 @@
     rec.onend = () => { listening = false; mic.classList.remove('listening'); if (vs.textContent.startsWith('🎤')) status(''); };
     try { rec.start(); } catch (err) { status('వాయిస్ ప్రారంభం కాలేదు.'); }
   });
-
-  // ---------- signed-in user + auto logout after inactivity ----------
-  (function session() {
-    let idleMs = 10 * 60e3, lastActive = Date.now(), lastPing = Date.now(), activeSincePing = false, warned = false;
-    const goLogin = r => { location.href = '/login' + (r ? '?e=' + r : ''); };
-    fetch('/api/me').then(r => r.status === 401 ? r.json().then(j => goLogin(j.reason)) : r.json()).then(me => {
-      if (!me || !me.username) return;
-      idleMs = me.idleMinutes * 60e3;
-      $('who').textContent = '👤 ' + (me.fullName || me.username);
-      if (me.role === 'admin') $('adminLink').hidden = false;
-    }).catch(() => {});
-    const activity = () => {
-      if (warned) return;               // while the warning is open only the button counts
-      lastActive = Date.now(); activeSincePing = true;
-    };
-    ['pointerdown', 'keydown', 'touchstart', 'wheel', 'input'].forEach(ev => document.addEventListener(ev, activity, { passive: true, capture: true }));
-    let mm = 0; document.addEventListener('mousemove', () => { const t = Date.now(); if (t - mm > 5000) { mm = t; activity(); } }, { passive: true });
-    function ping() {
-      lastPing = Date.now(); activeSincePing = false;
-      fetch('/api/ping', { method: 'POST', headers: { 'X-Requested-With': 'voter-app' } })
-        .then(r => { if (r.status === 401) r.json().then(j => goLogin(j.reason || 'removed')); }).catch(() => {});
-    }
-    function tick() {
-      const left = idleMs - (Date.now() - lastActive);
-      if (left <= 0) { location.href = '/logout?r=idle'; return; }
-      if (left <= 60e3) { warned = true; $('idleWarn').hidden = false; $('idleSec').textContent = Math.ceil(left / 1000); }
-      if (activeSincePing && Date.now() - lastPing > 60e3) ping();
-    }
-    $('idleStay').addEventListener('click', () => { warned = false; $('idleWarn').hidden = true; lastActive = Date.now(); ping(); });
-    setInterval(tick, 1000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-  })();
-  syncLayout();
   if (!SR) mic.title = 'Voice search needs Chrome / Edge';
 })();

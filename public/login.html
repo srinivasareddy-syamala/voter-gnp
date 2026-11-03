@@ -17,33 +17,17 @@
   input{width:100%;box-sizing:border-box;padding:12px 14px;font-size:16px;border:1.5px solid #d6d2c8;border-radius:10px}
   input:focus{outline:none;border-color:#0f6b5c}
   button{margin-top:14px;width:100%;padding:12px;font-size:16px;font-weight:600;border:0;border-radius:10px;background:#0f6b5c;color:#fff;cursor:pointer}
-  .err{color:#b3261e;font-size:14px;margin-top:12px;display:none;line-height:1.6;background:#fdecea;border-radius:8px;padding:8px 10px}
-  .err.info{color:#0f6b5c;background:#e7f2ef}
+  .err{color:#b3261e;font-size:14px;margin-top:10px;display:none}
 </style>
 </head>
 <body>
 <form method="post" action="/login">
   <h1>ఓటరు శోధన · Voter Search</h1>
   <p>గణపవరం గ్రామ పంచాయతీ – 2026</p>
-  <input type="text" name="username" placeholder="యూజర్ పేరు / Username" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required>
-  <input type="password" name="password" placeholder="పాస్‌వర్డ్ / Password" autocomplete="current-password" required style="margin-top:10px">
-  <input type="hidden" name="next" id="next">
+  <input type="password" name="password" placeholder="పాస్‌వర్డ్ / Password" autofocus required>
   <button type="submit">లాగిన్ · Login</button>
-  <div class="err" id="e"></div>
+  <div class="err" id="e">తప్పు పాస్‌వర్డ్ · Wrong password</div>
 </form>
-<script>
-  const p = new URLSearchParams(location.search), e = p.get('e'), box = document.getElementById('e');
-  const M = {
-    bad: 'యూజర్ పేరు లేదా పాస్‌వర్డ్ తప్పు · Wrong username or password',
-    inactive: 'మీ ఖాతా నిలిపివేయబడింది. అడ్మిన్‌ను సంప్రదించండి · Your account is disabled. Contact admin.',
-    limit: `పరికరాల పరిమితి (${p.get('n') || ''}) పూర్తయింది. కొత్త పరికరం కోసం అడ్మిన్‌ను సంప్రదించండి · Device limit reached. Ask admin to remove an old device.`,
-    blocked: 'ఈ పరికరం బ్లాక్ చేయబడింది · This device is blocked by admin.',
-    rate: 'చాలా ప్రయత్నాలు. 15 నిమిషాల తర్వాత ప్రయత్నించండి · Too many attempts. Try after 15 minutes.',
-    idle: 'పని లేకపోవడంతో లాగ్ అవుట్ అయ్యారు. మళ్ళీ లాగిన్ అవ్వండి · Logged out after inactivity. Please log in again.',
-    removed: 'మీ సెషన్ ముగిసింది. మళ్ళీ లాగిన్ అవ్వండి · Session ended. Please log in again.'
-  };
-  if (M[e]) { box.textContent = M[e]; box.style.display = 'block'; if (e === 'idle' || e === 'removed') box.classList.add('info'); }
-  if (p.get('next') === 'admin') document.getElementById('next').value = 'admin';
-</script>
+<script>if(location.search.includes('e=1'))document.getElementById('e').style.display='block'</script>
 </body>
 </html>
