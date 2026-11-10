@@ -13,6 +13,16 @@ Click a result and the original PDF page opens with that voter's box highlighted
 - **Same house** button lists the whole household.
 - **Password protected** (set `APP_PASSWORD`). Pages are marked `noindex`.
 
+## Duplicate voters
+Tap **👥 నకిలీ ఓటర్లు · Duplicate voters** to see entries that may be the same person listed more than once:
+- **ఎక్కువ అవకాశం · Very likely** – same name and same father/husband name (spelling variants count), same gender, age within 2 years
+- **మధ్యస్థ · Likely** – same as above but the ages differ by 3–15 years
+- **పరిశీలించండి · Check** – same name, gender and age (±1) but a different father/husband name, or a large age gap
+
+Each group shows the voters' cards from the PDF (with photos) side by side; tap one to open it on the page.
+Filters (ward, gender, age) also apply. **⬇ Excel (CSV)** downloads the list. These are only suspected
+duplicates – confirm with the photos, house numbers and a field check before acting on them.
+
 ## Auto logout
 Every device (phone, laptop) is logged out after **5 minutes without activity** (typing, tapping, scrolling).
 A countdown warning with a "Stay logged in" button appears in the last minute. The server also refuses any

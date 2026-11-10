@@ -108,3 +108,29 @@ mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 1px}
 .iw-box{background:#fff;border-radius:16px;padding:22px 22px 18px;width:min(360px,90vw);display:flex;flex-direction:column;gap:8px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .iw-box b{font-size:17px}.iw-box small{color:var(--muted)}
 .iw-box .btn{margin-top:8px;padding:11px;font-size:16px}
+
+/* ---------- duplicate voters ---------- */
+.dupbtn{display:flex;align-items:center;gap:8px;margin-top:10px;border:1.5px dashed #d9a441;background:#fff8ea;color:#7a4b00;border-radius:10px;padding:7px 12px;font-size:14px;font-weight:600}
+.dupbtn.on{border-style:solid;background:#7a4b00;color:#fff}
+.dupcount{background:#e8a33d;color:#fff;border-radius:999px;padding:0 8px;font-size:12.5px}
+.dupbtn.on .dupcount{background:#fff;color:#7a4b00}
+.dupbar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.duptitle{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--muted)} .duptitle b{color:var(--ink);font-size:16.5px}
+.dupx{margin-left:auto;border:0;background:#f1eee6;border-radius:8px;width:32px;height:30px;font-size:15px}
+.dupchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dupchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13.5px;color:var(--ink)}
+.dupchips button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.dupacts{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:10px}
+.dupacts .note{font-size:12.5px;color:var(--muted)}
+.lvdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.lvdot.lv-high,.lvbadge.lv-high{background:#c62828}.lvdot.lv-med,.lvbadge.lv-med{background:#e8a33d}.lvdot.lv-check,.lvbadge.lv-check{background:#7b8794}
+.dgroup{background:#fff;border:1px solid var(--line);border-left:5px solid #7b8794;border-radius:14px;padding:10px 12px}
+.dgroup.lv-high{border-left-color:#c62828}.dgroup.lv-med{border-left-color:#e8a33d}
+.dhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:8px;font-size:13.5px}
+.dno{font-weight:700;color:var(--muted)}
+.lvbadge{color:#fff;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600}
+.dwhy{color:#3c474d}
+.dmembers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.dmem{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dmem .card{border-style:dashed}
+.thumb{width:100%;border-radius:8px;background-color:#f1eee6;background-repeat:no-repeat;cursor:pointer;border:1px solid var(--line)}

@@ -8,6 +8,7 @@
   const PAGE_SIZE = 40;
 
   let DB = [], PAGES = [], DICT = [], results = [], shown = 0, family = null;
+  let DUPS = [], dupMode = false, dupLevel = '';
   const state = { field: 'name', voiceLang: 'te-IN' };
 
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -34,6 +35,8 @@
     DICT = [...dict.values()].filter(e => e.k);
     const wards = [...new Set(DB.map(v => v.ward))].sort((a, b) => a - b);
     $('ward').insertAdjacentHTML('beforeend', wards.map(w => `<option value="${w}">వార్డు ${w}</option>`).join(''));
+    DUPS = findDuplicates(DB);
+    $('dupCount').textContent = DUPS.length;
     run();
   }).catch(e => { if (e.message !== 'auth') $('meta').textContent = 'డేటా లోడ్ కాలేదు · Could not load data'; });
 
@@ -187,13 +190,18 @@
   let timer;
   function run() {
     if (!DB.length) return;
+    if (dupMode) {
+      results = dupResults(); renderDups(); $('telugu').hidden = true;
+      if (isWide()) { if (results.length) openViewer(0); else closeViewer(); } else if (vi >= 0) closeViewer();
+      return;
+    }
     results = search($('q').value);
     render(false);
     showTelugu($('q').value);
     if (isWide()) { if (results && results.length) openViewer(0); else closeViewer(); }
     else if (vi >= 0) closeViewer();
   }
-  $('q').addEventListener('input', () => { family = null; clearTimeout(timer); timer = setTimeout(run, 160); });
+  $('q').addEventListener('input', () => { family = null; setDupMode(false); clearTimeout(timer); timer = setTimeout(run, 160); });
   $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); run(); $('q').blur(); } });
   ['ward', 'gender', 'amin', 'amax'].forEach(id => $(id).addEventListener('change', () => { updateFilterBadge(); run(); }));
   $('fapply').addEventListener('click', () => {
@@ -206,6 +214,8 @@
     updateFilterBadge(); run();
   });
   $('more').addEventListener('click', () => render(true));
+  // vnext may ask for more cards; in duplicate mode everything is already shown
+  /* render(true) is a no-op in duplicate mode (all groups are rendered) */
 
   function seg(id, key) {
     $(id).addEventListener('click', e => {
@@ -223,8 +233,131 @@
       const c = e.target.closest('.card'); const b = c && c.querySelector('[data-open]');
       if (b) return openViewer(+b.dataset.open);
     }
-    if (h) { family = h.dataset.house; family_label = h.dataset.hl; run(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (h) { setDupMode(false); family = h.dataset.house; family_label = h.dataset.hl; run(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     if (e.target.closest('#clearFam')) { family = null; run(); }
+  });
+
+
+  // ---------- duplicate voters ----------
+  // Groups entries that look like the same person listed more than once:
+  //  high   – same name + same father/husband name (spelling may differ), same gender, age within 2 years
+  //  medium – same as above but age differs by 3–15 years
+  //  check  – same name + relation but age differs a lot, OR same name + gender + age (±1) with a different relation
+  const LEVELS = {
+    high: { te: 'ఎక్కువ అవకాశం', en: 'Very likely', cls: 'lv-high' },
+    medium: { te: 'మధ్యస్థ అవకాశం', en: 'Likely', cls: 'lv-med' },
+    check: { te: 'పరిశీలించండి', en: 'Check', cls: 'lv-check' }
+  };
+  function findDuplicates(db) {
+    const nk = v => P.key(v.name).replace(/ /g, ''), rk = v => P.key(v.rel).replace(/ /g, '');
+    const groups = [], seenPair = new Set();
+    const pairKey = g => g.map(v => v.sl).sort((a, b) => a - b).join('-');
+    const byNR = new Map();
+    for (const v of db) {
+      if (!v.name || !v.rel) continue;
+      const k = nk(v) + '|' + rk(v) + '|' + v.g;
+      if (!byNR.has(k)) byNR.set(k, []); byNR.get(k).push(v);
+    }
+    for (const g of byNR.values()) {
+      if (g.length < 2) continue;
+      const ages = g.map(v => v.age ?? 0), diff = Math.max(...ages) - Math.min(...ages);
+      const sameSpelling = new Set(g.map(v => v._nf + '|' + v._rf)).size === 1;
+      const level = diff <= 2 ? 'high' : diff <= 15 ? 'medium' : 'check';
+      groups.push({ level, members: g.sort((a, b) => a.sl - b.sl), diff,
+        why: (sameSpelling ? 'ఒకే పేరు + ఒకే తండ్రి/భర్త పేరు' : 'ఒకే పేరు + ఒకే తండ్రి/భర్త పేరు (స్పెల్లింగ్ తేడా)') + ` · వయస్సు తేడా ${diff}`,
+        whyEn: (sameSpelling ? 'Same name & relative' : 'Same name & relative (spelling differs)') + `, age gap ${diff}` });
+      seenPair.add(pairKey(g));
+    }
+    // same name + gender + age (±1), different relative name
+    const byN = new Map();
+    for (const v of db) {
+      if (!v.name || v.age == null) continue;
+      const k = nk(v) + '|' + v.g;
+      if (!byN.has(k)) byN.set(k, []); byN.get(k).push(v);
+    }
+    for (const g of byN.values()) {
+      if (g.length < 2) continue;
+      g.sort((a, b) => a.age - b.age);
+      let cl = [g[0]];
+      const flush = () => {
+        if (cl.length > 1 && new Set(cl.map(rk)).size > 1 && !seenPair.has(pairKey(cl))) {
+          const diff = cl[cl.length - 1].age - cl[0].age;
+          groups.push({ level: 'check', members: cl.slice().sort((a, b) => a.sl - b.sl), diff,
+            why: `ఒకే పేరు + ఒకే వయస్సు (${cl[0].age}${diff ? '±1' : ''}), తండ్రి/భర్త పేరు వేరు`,
+            whyEn: 'Same name & age, different relative' });
+        }
+      };
+      for (let i = 1; i < g.length; i++) { if (g[i].age - cl[cl.length - 1].age <= 1) cl.push(g[i]); else { flush(); cl = [g[i]]; } }
+      flush();
+    }
+    const order = { high: 0, medium: 1, check: 2 };
+    groups.sort((a, b) => order[a.level] - order[b.level] || a.diff - b.diff || a.members[0].sl - b.members[0].sl);
+    groups.forEach((g, i) => g.no = i + 1);
+    return groups;
+  }
+  function visibleDups() {
+    const ok = filters();
+    return DUPS.filter(g => (!dupLevel || g.level === dupLevel) && g.members.some(ok));
+  }
+  function dupResults() { return visibleDups().flatMap(g => g.members.map(v => ({ v, s: 1, g }))); }
+  function setDupMode(on) {
+    dupMode = on; $('dupBtn').classList.toggle('on', on);
+    if (on) { family = null; $('q').value = ''; }
+  }
+  function cropCss(v) {
+    const pg = PAGES[v.page - 1] || { w: 595, h: 842 }, [bx, by, bw, bh] = v.box, pad = 0.004;
+    const cx = Math.max(0, bx - pad), cy = Math.max(0, by - pad), cw = Math.min(1 - cx, bw + 2 * pad), ch = Math.min(1 - cy, bh + 2 * pad);
+    return `aspect-ratio:${(cw * pg.w).toFixed(1)}/${(ch * pg.h).toFixed(1)};background-size:${(100 / cw).toFixed(3)}% auto;` +
+      `background-position:${((cx / (1 - cw)) * 100).toFixed(3)}% ${((cy / (1 - ch)) * 100).toFixed(3)}%`;
+  }
+  let thumbObs = null;
+  function renderDups() {
+    const el = $('results'), gs = visibleDups();
+    const cnt = l => DUPS.filter(g => g.level === l).length;
+    const people = gs.reduce((a, g) => a + g.members.length, 0);
+    $('meta').innerHTML = `👥 ${gs.length} గుంపులు · ${people} ఎంట్రీలు <span style="color:var(--muted)">(duplicate groups · entries)</span>`;
+    let i = 0;
+    el.innerHTML = `<div class="dupbar">
+        <div class="duptitle"><b>నకిలీ ఓటర్ల జాబితా</b> · Possible duplicate voters <button id="dupClose" class="dupx" aria-label="Close">✕</button></div>
+        <div class="dupchips">
+          <button data-lv="" class="${dupLevel ? '' : 'on'}">అన్నీ · All (${DUPS.length})</button>
+          ${Object.entries(LEVELS).map(([k, L]) => `<button data-lv="${k}" class="${dupLevel === k ? 'on' : ''}"><span class="lvdot ${L.cls}"></span>${L.te} (${cnt(k)})</button>`).join('')}
+        </div>
+        <div class="dupacts"><button id="dupCsv" class="btn">⬇ Excel (CSV) డౌన్‌లోడ్</button>
+          <span class="note">ఇవి అనుమానిత ఎంట్రీలు మాత్రమే – ఫోటోలు, ఇంటి సంఖ్య చూసి నిర్ధారించండి.</span></div>
+      </div>` +
+      (gs.length ? gs.map(g => `<div class="dgroup ${LEVELS[g.level].cls}">
+        <div class="dhead"><span class="dno">#${g.no}</span><span class="lvbadge ${LEVELS[g.level].cls}">${LEVELS[g.level].te} · ${LEVELS[g.level].en}</span>
+          <span class="dwhy">${esc(g.why)}</span></div>
+        <div class="dmembers">${g.members.map(v => { const k = i++; return `<div class="dmem">
+          <div class="thumb" data-thumb="${k}" style="${cropCss(v)}" title="పత్రంలో చూపించు"></div>${card({ v }, k, [])}</div>`; }).join('')}</div>
+      </div>`).join('') : '<div class="empty">ఈ ఫిల్టర్‌తో నకిలీలు లేవు · No duplicates for this filter.</div>');
+    shown = results.length; $('more').hidden = true;
+    // load page images for the photo thumbnails only when they scroll into view
+    if (thumbObs) thumbObs.disconnect();
+    thumbObs = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return; const t = e.target, r = results[+t.dataset.thumb];
+      if (r) t.style.backgroundImage = `url("/data/pages/${r.v.page}.webp")`; thumbObs.unobserve(t);
+    }), { rootMargin: '300px' }) : null;
+    el.querySelectorAll('.thumb').forEach(t => thumbObs ? thumbObs.observe(t) : (t.style.backgroundImage = `url("/data/pages/${results[+t.dataset.thumb].v.page}.webp")`));
+  }
+  function exportDupsCsv() {
+    const rows = [['Group', 'Level', 'Reason', 'Serial No', 'Name', 'Relation', 'Relative name', 'Age', 'Gender', 'House No', 'Ward', 'Voter ID (EPIC)', 'Page']];
+    for (const g of visibleDups()) for (const v of g.members)
+      rows.push([g.no, LEVELS[g.level].en, g.whyEn, v.sl, v.name, REL[v.rtype] || '', v.rel, v.age ?? '', v.g === 'F' ? 'F' : v.g === 'M' ? 'M' : '', v.house, v.ward, v.epic, v.page]);
+    const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `duplicate_voters_ganapavaram${dupLevel ? '_' + dupLevel : ''}.csv`;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  $('dupBtn').addEventListener('click', () => { setDupMode(!dupMode); run(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('results').addEventListener('click', e => {
+    if (!dupMode) return;
+    const lv = e.target.closest('[data-lv]'); if (lv) { dupLevel = lv.dataset.lv; return run(); }
+    if (e.target.closest('#dupClose')) { setDupMode(false); return run(); }
+    if (e.target.closest('#dupCsv')) return exportDupsCsv();
+    const t = e.target.closest('[data-thumb]'); if (t) return openViewer(+t.dataset.thumb);
   });
 
   // ---------- document viewer with highlight ----------
@@ -288,7 +421,7 @@
   window.addEventListener('popstate', () => { if (!isWide() && !$('viewer').hidden) closeViewer(); });
   $('vprev').addEventListener('click', () => vi > 0 && openViewer(vi - 1, true));
   $('vnext').addEventListener('click', () => {
-    if (vi < results.length - 1) { if (vi + 1 >= shown) render(true); openViewer(vi + 1, true); }
+    if (vi < results.length - 1) { if (!dupMode && vi + 1 >= shown) render(true); openViewer(vi + 1, true); }
   });
   function setZoom(z) { zoom = Math.max(1, Math.min(3, z)); $('page').style.width = `min(${900 * zoom}px, ${96 * zoom}vw)`; setTimeout(() => scrollToHl(false), 200); }
   $('zin').addEventListener('click', () => setZoom(zoom + 0.5));
