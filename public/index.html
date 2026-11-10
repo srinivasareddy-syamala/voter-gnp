@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f6b5c">
 <title>ఓటరు శోధన · గణపవరం 2026</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <header class="top">
@@ -17,6 +17,7 @@
   <a class="logout" href="/logout" title="Logout">నిష్క్రమించు</a>
 </header>
 
+<div class="layout" id="layout">
 <main>
   <section class="searchbox">
     <div class="inputrow">
@@ -67,6 +68,11 @@
     <button id="vprev" class="vbtn" aria-label="Previous">‹</button>
     <button id="vnext" class="vbtn" aria-label="Next">›</button>
   </div>
+  <div class="vempty" id="vempty">
+    <div>📄</div>
+    <p>ఎడమ వైపు ఫలితం పై క్లిక్ చేస్తే, ఓటరు పత్రంలో ఇక్కడ హైలైట్ అవుతారు.</p>
+    <small>Click a result on the left to see it highlighted in the voter list.</small>
+  </div>
   <div class="vbody" id="vbody">
     <div class="crop" id="crop"></div>
     <div class="vtools">
@@ -79,7 +85,15 @@
   </div>
 </div>
 
-<script src="phonetic.js?v=3"></script>
-<script src="app.js?v=3"></script>
+</div>
+<div id="idleWarn" class="idlewarn" hidden>
+  <div class="iw-box">
+    <b>⏳ <span id="idleSec">60</span> సెకన్లలో లాగ్ అవుట్ అవుతారు</b>
+    <small>No activity – you will be logged out soon.</small>
+    <button id="idleStay" class="btn pri">కొనసాగించు · Stay logged in</button>
+  </div>
+</div>
+<script src="phonetic.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

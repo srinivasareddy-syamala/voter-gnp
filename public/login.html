@@ -28,6 +28,13 @@
   <button type="submit">లాగిన్ · Login</button>
   <div class="err" id="e">తప్పు పాస్‌వర్డ్ · Wrong password</div>
 </form>
-<script>if(location.search.includes('e=1'))document.getElementById('e').style.display='block'</script>
+<script>
+  const e = new URLSearchParams(location.search).get('e'), box = document.getElementById('e');
+  if (e === '1') box.style.display = 'block';
+  if (e === 'idle') {
+    box.textContent = 'పని లేకపోవడంతో లాగ్ అవుట్ అయ్యారు. మళ్ళీ లాగిన్ అవ్వండి · Logged out after 5 minutes of no activity.';
+    box.style.color = '#0f6b5c'; box.style.display = 'block';
+  }
+</script>
 </body>
 </html>

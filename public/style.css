@@ -82,3 +82,29 @@ mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 1px}
 .factions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .factions .btn{padding:9px 16px;font-size:15px}
 .fcount{display:inline-block;background:var(--brand);color:#fff;border-radius:999px;font-size:12px;padding:0 8px;margin-left:6px}
+
+/* ---------- side panel layout (laptop / desktop) ---------- */
+.vempty{display:none}
+.card.active{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand)}
+@media (min-width:1000px){
+  .top{height:64px}
+  .layout{display:grid;grid-template-columns:minmax(400px,500px) 1fr;align-items:start}
+  .layout main{max-width:none;margin:0;padding:14px 14px 60px 18px}
+  .card{cursor:pointer}
+  .viewer,.viewer[hidden]{display:flex!important;inset:auto;position:sticky;top:64px;height:calc(100vh - 64px);z-index:1;border-left:1px solid #111}
+  .viewer.empty .vbar,.viewer.empty .vbody{display:none}
+  .viewer.empty .vempty{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#cfd6d4;padding:40px;line-height:1.8}
+  .vempty div{font-size:46px;opacity:.6}
+  .vempty p{font-size:16px;margin:10px 0 2px;max-width:380px}
+  .vempty small{opacity:.7}
+  .page{width:100%;max-width:none}
+  .pagewrap{padding:0 16px 40px}
+  .crop{width:min(560px,90%)}
+  .vtools{width:min(560px,90%)}
+}
+
+/* idle warning */
+.idlewarn{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:grid;place-items:center}
+.iw-box{background:#fff;border-radius:16px;padding:22px 22px 18px;width:min(360px,90vw);display:flex;flex-direction:column;gap:8px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.iw-box b{font-size:17px}.iw-box small{color:var(--muted)}
+.iw-box .btn{margin-top:8px;padding:11px;font-size:16px}

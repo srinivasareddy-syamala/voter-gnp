@@ -13,6 +13,12 @@ Click a result and the original PDF page opens with that voter's box highlighted
 - **Same house** button lists the whole household.
 - **Password protected** (set `APP_PASSWORD`). Pages are marked `noindex`.
 
+## Auto logout
+Every device (phone, laptop) is logged out after **5 minutes without activity** (typing, tapping, scrolling).
+A countdown warning with a "Stay logged in" button appears in the last minute. The server also refuses any
+session idle for longer than that, so closed tabs and phones in a pocket are logged out too.
+To change the time, set the environment variable `IDLE_MINUTES` (e.g. `10`).
+
 ## Deploy on Railway
 1. Push this folder to a **private** GitHub repo (or run `railway up` from this folder with the Railway CLI).
 2. In Railway: **New Project → Deploy from GitHub repo** → pick the repo. Railway detects Node and runs `npm start`.
